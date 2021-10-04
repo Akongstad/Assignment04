@@ -9,6 +9,7 @@ namespace Assignment4.Entities
 
        [Required]
        [StringLength(50)]
+       [Key]
        public string name{get; set;} 
     }
 }
