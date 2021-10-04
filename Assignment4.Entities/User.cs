@@ -7,7 +7,7 @@ namespace Assignment4.Entities
 {
     public class User
     {
-        public int iD { get; set; }
+        public int ID { get; set; }
 
         [StringLength(100)]
         [Required]
@@ -17,9 +17,8 @@ namespace Assignment4.Entities
         [Required]
         [EmailAddress]
         [Key]
-        //[Remote(action: "VerifyEmail", controller: "UserController")]//,ErrorMessage="Email already in use")]
         public string Email { get; set; }
 
-        public ICollection<int> Tasks { get; set; }
+        public ICollection<Task> Tasks { get; set; }
     }
 }

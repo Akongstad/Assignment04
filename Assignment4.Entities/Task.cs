@@ -7,10 +7,7 @@ namespace Assignment4.Entities
 {
     public class Task
     {
-        public Task(){
-            this.tags = new HashSet<Tag>();
-        }
-        public int iD {get; set;}
+        public int ID {get; set;}
 
         [StringLength(100)]
         [Required]
@@ -18,7 +15,7 @@ namespace Assignment4.Entities
         public int? userID {get; set;}
         public string? Description {get; set;}
         [Required]
-        [Column(TypeName = "nvarchar(24)")]
+        //[Column(TypeName = "nvarchar(24)")]
         public State state {get; set;}
         public ICollection<Tag> tags{get; set;}
     }
