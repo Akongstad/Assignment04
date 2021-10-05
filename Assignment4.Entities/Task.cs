@@ -7,17 +7,17 @@ namespace Assignment4.Entities
 {
     public class Task
     {
-        public int ID {get; set;}
-
+        public int Id {get; set;}
         [StringLength(100)]
         [Required]
         public string Title {get; set;}
-        public int? userID {get; set;}
+        public int? UserID {get; set;}
+        public User User {get; set;}
         public string? Description {get; set;}
         [Required]
         //[Column(TypeName = "nvarchar(24)")]
-        public State state {get; set;}
-        public ICollection<Tag> tags{get; set;}
+        public State State {get; set;}
+        public ICollection<Tag> Tags{get; set;}
     }
 
     
