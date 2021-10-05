@@ -7,7 +7,7 @@ namespace Assignment4.Entities
 {
     public class User
     {
-        public int ID { get; set; }
+        public int Id { get; set; }
 
         [StringLength(100)]
         [Required]

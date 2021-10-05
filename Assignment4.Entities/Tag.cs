@@ -5,11 +5,11 @@ namespace Assignment4.Entities
 {
     public class Tag
     {
-       public int id {get; set; }
+       public int Id {get; set; }
 
        [Required]
        [StringLength(50)]
        [Key]
-       public string name{get; set;} 
+       public string Name{get; set;} 
     }
 }

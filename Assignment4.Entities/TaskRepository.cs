@@ -75,7 +75,35 @@ namespace Assignment4.Entities
 
             CloseConnection();
         }
-        //TaskDetailsDTO FindById(int id); TO DO!
+        TaskDetailsDTO FindById(int id){
+            var cmdText = @"SELECT t.Id, t.Title, t.Description, t.AssignedToId, t.AssignedToName, AssignedToEmail, t.Tags, t.State
+                            FROM Tasks as t
+                            WEHRE id = @Id";
+            using var command = new SqlCommand(cmdText, _connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+             OpenConnection();
+             using var reader = command.ExecuteReader();
+
+            command.ExecuteNonQuery();
+            var task = reader.Read()
+                ? new TaskDetailsDTO
+                {
+                    Id = reader.GetInt32("Id"),
+                    Title = reader.GetString("Title"),
+                    Description = reader.GetString("Description"),
+                    AssignedToId = reader.GetInt32("AssignedToId"),
+                    AssignedToName = reader.GetString("AssignedToName"),
+                    AssignedToEmail = reader.GetString("AssignedToEmail")
+
+                    //Tags = reader.GetColumnSchema("Tags"),
+                    //State = reader.GetString("State")
+                }
+                : null;
+            
+            CloseConnection();
+            return task;
+        }
         void Update(TaskDTO task){
             var cmdText = @"UPDATE Tasks SET
                             Title = @Title,
