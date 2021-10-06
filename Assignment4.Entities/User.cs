@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Assignment4.Entities
 {
@@ -16,7 +17,6 @@ namespace Assignment4.Entities
         [StringLength(100)]
         [Required]
         [EmailAddress]
-        [Key]
         public string Email { get; set; }
 
         public ICollection<Task> Tasks { get; set; }
