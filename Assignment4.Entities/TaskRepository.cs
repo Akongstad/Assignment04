@@ -35,8 +35,8 @@ namespace Assignment4.Entities
                     Title = reader.GetString("Title"),
                     Description = reader.GetString("Description"),
                     AssignedToId = reader.GetInt32("AssignedToId"),
-                    //Tags = reader.Get("Tags"),//?????
-                    //State = reader.Get("State") //getString? GetEnum?
+                    //Tags = reader.C("Tags"),//?????
+                    //State = reader.GetString("State") //getString? GetEnum?
                 };
             }
 
