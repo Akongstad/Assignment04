@@ -75,6 +75,7 @@ namespace Assignment4.Entities
 
             CloseConnection();
         }
+
         TaskDetailsDTO FindById(int id){
             var cmdText = @"SELECT t.Id, t.Title, t.Description, t.AssignedToId, t.AssignedToName, AssignedToEmail, t.Tags, t.State
                             FROM Tasks as t
