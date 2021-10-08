@@ -4,151 +4,114 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
 using Assignment4.Core;
+using System.Linq;
+using System;
 
 namespace Assignment4.Entities
 {
-    public class TaskRepository
+    public class TaskRepository : ITaskRepository
     {
-        private readonly SqlConnection _connection;
+        private readonly KanbanContext context;
 
-        public TaskRepository(SqlConnection connection)
+        public TaskRepository(KanbanContext context) => this.context = context;
+        public IReadOnlyCollection<TaskDTO> All(){
+           var tasks = new List<TaskDTO>();
+           foreach (var item in context.Tasks)
+           {
+                tasks.Add(new TaskDTO{
+                   Id = item.Id,
+                   Title = item.Title,
+                   Description = item.Description,
+                   AssignedToId = item.UserID,
+                   Tags =   item.Tags.Select(n => n.Name).ToList().AsReadOnly(),
+                   State = item.State
+               }
+               );
+           }
+            return tasks;
+        }
+        
+        public (Response, int id) Create(TaskDTO task){
+            var newTask = new Task{
+                   Title = task.Title,
+                   Description = task.Description,
+                   UserID = task.AssignedToId,
+                   Tags = task.Tags.Select(n => new Tag{Name = n}).ToList().AsReadOnly(),
+                   State = State.New,
+                   StateUpdated = DateTime.UtcNow
+               };
+            context.Tasks.Add(newTask);
+            context.SaveChanges();
+            return (Response.Created, newTask.Id);
+        }
+
+        public Response Delete(int taskId)
         {
-            _connection = connection;
-        }
-        IEnumerable<TaskDTO> All(){ //Should/used to be IReadOnlyCollection<TaskDTO>
-            var cmdText = @"SELECT t.Id, t.Title, t.Description, t.AssignedToId, t.Tags, t.State
-                            FROM Tasks AS t
-                            LEFT JOIN Users AS u ON t.AssignedToId = u.ID
-                            ORDER BY t.Title";
-
-            using var command = new SqlCommand(cmdText, _connection);
-
-            OpenConnection();
-
-            using var reader = command.ExecuteReader();
-
-            while (reader.Read())
-            {
-                yield return new TaskDTO
-                {
-                    Id = reader.GetInt32("Id"),
-                    Title = reader.GetString("Title"),
-                    Description = reader.GetString("Description"),
-                    AssignedToId = reader.GetInt32("AssignedToId"),
-                    //Tags = reader.C("Tags"),//?????
-                    //State = reader.GetString("State") //getString? GetEnum?
-                };
+            Task task = context.Tasks.FirstOrDefault(t => t.Id == taskId);
+            Response response;
+            if(task == null){
+                return Response.NotFound;
             }
+            switch (task.State){
+                case State.New:
+                    context.Remove(task);
+                    response = Response.Deleted;
+                    break;
 
-            CloseConnection();
+                case State.Active:
+                    task.State = State.Removed;
+                    response = Response.Deleted;
+                    break;
+
+                case State.Resolved:
+                case State.Closed:
+                case State.Removed:
+                    response = Response.Conflict;
+                    break;
+                default:
+                    response = Response.BadRequest;
+                break;
+            }
+            context.SaveChanges();
+            return response;
         }
-        int Create(TaskDTO task){
-            var cmdText = @"INSERT Task (Title, Description, AssignedToId, Tags, State)
-                            VALUES (@Title, @Description, @AssignedToId, @Tags, @State);
-                            SELECT SCOPE_IDENTITY()";
-
-            using var command = new SqlCommand(cmdText, _connection);
-
-            command.Parameters.AddWithValue("@Title", task.Title);
-            command.Parameters.AddWithValue("@AssignedToId", task.AssignedToId);
-            command.Parameters.AddWithValue("@Tags", task.Tags);
-            command.Parameters.AddWithValue("@State", task.State);
-
-            OpenConnection();
-
-            var id = command.ExecuteScalar();
-
-            CloseConnection();
-
-            return (int)id;
+        
+        public (Response, TaskDetailsDTO) FindById(int id) {
+        Task task = context.Tasks.FirstOrDefault(t => t.Id == id);
+        if(task == null){
+            return (Response.NotFound, null);
         }
-        void Delete(int taskId){
-            var cmdText = @"DELETE Task WHERE Id = @Id";
-
-            using var command = new SqlCommand(cmdText, _connection);
-
-            command.Parameters.AddWithValue("@Id", taskId);
-
-            OpenConnection();
-
-            command.ExecuteNonQuery();
-
-            CloseConnection();
+        TaskDetailsDTO taskDetails = new TaskDetailsDTO{
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            AssignedToId = task.UserID,
+            AssignedToEmail = task.User.Email,
+            AssignedToName = task.User.Name,
+            Tags = task.Tags.Select(n => n.Name).ToList().AsReadOnly(),
+            State = task.State
+        };
+            return (Response.Found, taskDetails);
         }
-
-        TaskDetailsDTO FindById(int id){
-            var cmdText = @"SELECT t.Id, t.Title, t.Description, t.AssignedToId, t.AssignedToName, AssignedToEmail, t.Tags, t.State
-                            FROM Tasks as t
-                            WEHRE id = @Id";
-            using var command = new SqlCommand(cmdText, _connection);
-            command.Parameters.AddWithValue("@Id", id);
-
-             OpenConnection();
-             using var reader = command.ExecuteReader();
-
-            command.ExecuteNonQuery();
-            var task = reader.Read()
-                ? new TaskDetailsDTO
-                {
-                    Id = reader.GetInt32("Id"),
-                    Title = reader.GetString("Title"),
-                    Description = reader.GetString("Description"),
-                    AssignedToId = reader.GetInt32("AssignedToId"),
-                    AssignedToName = reader.GetString("AssignedToName"),
-                    AssignedToEmail = reader.GetString("AssignedToEmail")
-
-                    //Tags = reader.GetColumnSchema("Tags"),
-                    //State = reader.GetString("State")
+       
+        public Response Update(TaskDTO task){ //TODO. Need to update all attributes. 
+            Task oldTask = context.Tasks.FirstOrDefault(t => t.Id == task.Id);
+            if(oldTask == null){
+            return Response.NotFound;
+        }
+            if (oldTask.State != task.State){
+                oldTask.StateUpdated = DateTime.UtcNow;
                 }
-                : null;
             
-            CloseConnection();
-            return task;
-        }
-        void Update(TaskDTO task){
-            var cmdText = @"UPDATE Tasks SET
-                            Title = @Title,
-                            Description = @Description,
-                            AssignedToId = @AssignedToId,
-                            Tags = @Tags
-                            State = @State
-                            WHERE Id = @Id";
-
-            using var command = new SqlCommand(cmdText, _connection);
-
-            command.Parameters.AddWithValue("@Id", task.Id);
-            command.Parameters.AddWithValue("@Title", task.Title);
-            command.Parameters.AddWithValue("@Description", task.Description);
-            command.Parameters.AddWithValue("@AssignedToId", task.AssignedToId);
-            command.Parameters.AddWithValue("@Tags", task.Tags);
-            command.Parameters.AddWithValue("@State", task.State);
-
-            OpenConnection();
-
-            command.ExecuteNonQuery();
-
-            CloseConnection();
-        }
-         
-         private void OpenConnection()
-        {
-            if (_connection.State == ConnectionState.Closed)
-            {
-                _connection.Open();
-            }
-        }
-
-        private void CloseConnection()
-        {
-            if (_connection.State == ConnectionState.Open)
-            {
-                _connection.Close();
-            }
+            context.Update(oldTask);
+            context.SaveChanges();
+            return Response.Updated;
+ 
         }
 
         public void Dispose()
         {
-            _connection.Dispose();
+            this.Dispose();
         }
     }
 }

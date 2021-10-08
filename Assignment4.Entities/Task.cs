@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,13 +12,12 @@ namespace Assignment4.Entities
         [StringLength(100)]
         [Required]
         public string Title {get; set;}
-        public int UserID {get; set;}
+        public int? UserID {get; set;}
         public User User {get; set;}
         public string Description {get; set;}
         [Required]
         public State State {get; set;}
         public ICollection<Tag> Tags{get; set;}
+        public DateTime StateUpdated{get; set;}
     }
-
-    
 }
