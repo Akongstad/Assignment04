@@ -16,6 +16,7 @@ namespace Assignment4.Entities
         public User User {get; set;}
         public string Description {get; set;}
         [Required]
+
         public State State {get; set;}
         public ICollection<Tag> Tags{get; set;}
         public DateTime StateUpdated{get; set;}
