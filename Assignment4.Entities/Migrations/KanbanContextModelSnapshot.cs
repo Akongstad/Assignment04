@@ -49,12 +49,14 @@ namespace Assignment4.Entities.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
 
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
 
                     b.Property<DateTime>("StateUpdated")
                         .HasColumnType("datetime2");

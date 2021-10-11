@@ -12,7 +12,8 @@ namespace Assignment4.Entities
         [StringLength(100)]
         [Required]
         public string Title {get; set;}
-        public int? UserID {get; set;}
+
+        public int UserID {get; set;}
         public User User {get; set;}
         public string Description {get; set;}
         [Required]

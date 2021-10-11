@@ -17,7 +17,7 @@ namespace Assignment4
             using var context = new KanbanContext(optionsBuilder.Options);
             KanbanContextFactory.seed(context);
             var taskRepo = new TaskRepository(context);
-            Console.WriteLine(taskRepo.Create(new Core.TaskDTO {Title = "Debugings", State = Assignment4.Core.State.New, Tags = new[]{"Do the debug"}}));
+            Console.WriteLine(taskRepo.Create(new Core.TaskDTO {Title = "Debuggings", State = Assignment4.Core.State.New, Tags = new[]{"Do the debug"}}));
             foreach (var item in taskRepo.All()){
                 Console.WriteLine(item);
             }
