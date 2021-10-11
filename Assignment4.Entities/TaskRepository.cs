@@ -38,6 +38,7 @@ namespace Assignment4.Entities
                    UserID = task.AssignedToId,
                    Tags = task.Tags.Select(n => new Tag{Name = n}).ToList().AsReadOnly(),
                    State = State.New,
+                   Created = DateTime.UtcNow,
                    StateUpdated = DateTime.UtcNow
                };
             context.Tasks.Add(newTask);
@@ -94,24 +95,29 @@ namespace Assignment4.Entities
             return (Response.Found, taskDetails);
         }
        
-        public Response Update(TaskDTO task){ //TODO. Need to update all attributes. 
+        public Response Update(TaskDTO task){ 
             Task oldTask = context.Tasks.FirstOrDefault(t => t.Id == task.Id);
             if(oldTask == null){
-            return Response.NotFound;
-        }
+                return Response.NotFound;
+            }
+             if(context.Users.FirstOrDefault(u => u.Id == task.AssignedToId)==null){
+                return Response.BadRequest;
+            }
+            oldTask.Title = task.Title;
+            oldTask.Description = task.Description;
+            oldTask.UserID = task.AssignedToId;
+            oldTask.Tags = task.Tags.Select(n => new Tag{Name = n}).ToList().AsReadOnly();
             if (oldTask.State != task.State){
                 oldTask.StateUpdated = DateTime.UtcNow;
-                }
-            
+            }
+            oldTask.State = task.State;
             context.Update(oldTask);
             context.SaveChanges();
             return Response.Updated;
- 
         }
-
         public void Dispose()
         {
-            this.Dispose();
+            context.Dispose();
         }
     }
 }
