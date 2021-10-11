@@ -16,16 +16,12 @@ namespace Assignment4
             var optionsBuilder = new DbContextOptionsBuilder<KanbanContext>().UseSqlServer(connectionString);
             using var context = new KanbanContext(optionsBuilder.Options);
             KanbanContextFactory.seed(context);
-           
-            var test = from u in context.Users
-                           where u.Name.Contains("Bruhn")
-                           select new{
-                               u.Name
-                           };
-            foreach (var testuser in test)
-            {
-                Console.WriteLine(testuser.Name);    
+            var taskRepo = new TaskRepository(context);
+            Console.WriteLine(taskRepo.Create(new Core.TaskDTO {Title = "Debuggings", State = Assignment4.Core.State.New, Tags = new[]{"Do the debug"}}));
+            foreach (var item in taskRepo.All()){
+                Console.WriteLine(item);
             }
+            Console.WriteLine(taskRepo.FindById(1));
         }
         static IConfiguration LoadConfiguration()
         {
