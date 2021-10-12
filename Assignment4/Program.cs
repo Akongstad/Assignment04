@@ -4,6 +4,7 @@ using Assignment4.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
+using Assignment4.Core;
 
 namespace Assignment4
 {
@@ -17,11 +18,11 @@ namespace Assignment4
             using var context = new KanbanContext(optionsBuilder.Options);
             KanbanContextFactory.seed(context);
             var taskRepo = new TaskRepository(context);
-            Console.WriteLine(taskRepo.Create(new Core.TaskDTO {Title = "Debuggings", State = Assignment4.Core.State.New, Tags = new[]{"Do the debug"}}));
-            foreach (var item in taskRepo.All()){
+           
+            foreach (var item in taskRepo.ReadAll()){
                 Console.WriteLine(item);
             }
-            Console.WriteLine(taskRepo.FindById(1));
+            Console.WriteLine(taskRepo.Read(1));
         }
         static IConfiguration LoadConfiguration()
         {
