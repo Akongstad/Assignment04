@@ -19,22 +19,6 @@ namespace Assignment4.Entities
             context.Tasks
                     .Select(t => new TaskDTO(t.Id, t.Title, t.User.Name, t.Tags.Select(n => n.Name).ToList().AsReadOnly(), t.State))
                     .ToList().AsReadOnly();
-
-        /* public IReadOnlyCollection<TaskDTO> ReadAll(){
-           var tasks = new List<TaskDTO>();
-           foreach (var item in context.Tasks)
-           {
-                tasks.Add(new TaskDTO{
-                   Id = item.Id,
-                   Title = item.Title,
-                   AssignedToName = item.User.Name,
-                   Tags =   item.Tags.Select(n => n.Name).ToList(),
-                   State = item.State
-               }
-               );
-           }
-            return tasks;
-        } */
        
         public (Response Response, int TaskId) Create(TaskCreateDTO task){
             var newTask = new Task{
@@ -60,9 +44,7 @@ namespace Assignment4.Entities
             }
             switch (task.State){
                 case State.New:
-                    task.UserID = null;
-                    task.Tags = null;
-                    context.Remove(task);
+                    context.Tasks.Remove(task);
                     response = Response.Deleted;
                     break;
 
@@ -118,7 +100,7 @@ namespace Assignment4.Entities
                 oldTask.StateUpdated = DateTime.UtcNow;
             }
             oldTask.State = task.State;
-            context.Update(oldTask);
+            context.Tasks.Update(oldTask);
             context.SaveChanges();
             return Response.Updated;
         }

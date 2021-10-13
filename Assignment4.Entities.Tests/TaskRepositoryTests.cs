@@ -158,40 +158,18 @@ namespace Assignment4.Entities.Tests
             Assert.Equal(State.Removed, task.State);
         }
         
-         /* [Fact] //TODO get to work :)
+          [Fact]
         public void Delete_StateNew_removes_task()
         {
-            (Response response, TaskDetailsDTO task) = repo.Read(1);  
-            var expected = new TaskDetailsDTO(1, "Design new stuff", "Kong", DateTime.UtcNow,"Kong", new[]{"Design", "Discussion"}.ToList().AsReadOnly(), State.New, DateTime.UtcNow);
-            Assert.Equal(expected.Id, task.Id);
-            Assert.Equal(expected.Title, task.Title);
-            Assert.Equal(expected.AssignedToName, task.AssignedToName);
-            Assert.Collection(task.Tags, 
-                        tags => Assert.Equal("Design", tags),
-                        tags => Assert.Equal("Discussion", tags));
-            Assert.Equal(expected.Created, task.Created, precision: TimeSpan.FromSeconds(5));
-            Assert.Equal(expected.State, task.State);
-            Assert.Equal(expected.StateUpdated, task.StateUpdated, precision: TimeSpan.FromSeconds(5));
-            Assert.Equal(Response.Found, response);
-            repo.Delete(1);
-            Assert.Null(repo.Read(1));
-        }  */
+            context.ChangeTracker.Clear();
+            
+            Assert.Equal(Response.Deleted, repo.Delete(1));
+            Assert.Null(context.Tasks.Find(1));
+        }   
 
         [Fact]
         public void Update_updates_task_title()  //Cant update with the same tags. Cause Unique tag.Name attribute
         {
-        (Response response, TaskDetailsDTO task) = repo.Read(1);  
-            var expected = new TaskDetailsDTO(1, "Design new stuff", "Kong", DateTime.UtcNow,"Kong", new[]{"Design", "Discussion"}.ToList().AsReadOnly(), State.New, DateTime.UtcNow);
-            Assert.Equal(expected.Id, task.Id);
-            Assert.Equal(expected.Title, task.Title);
-            Assert.Equal(expected.AssignedToName, task.AssignedToName);
-            Assert.Collection(task.Tags, 
-                        tags => Assert.Equal("Design", tags),
-                        tags => Assert.Equal("Discussion", tags));
-            Assert.Equal(expected.Created, task.Created, precision: TimeSpan.FromSeconds(5));
-            Assert.Equal(expected.State, task.State);
-            Assert.Equal(expected.StateUpdated, task.StateUpdated, precision: TimeSpan.FromSeconds(5));
-            Assert.Equal(Response.Found, response);
             repo.Update(new TaskUpdateDTO{Id = 1, Title= "No designing here", AssignedToId = 1,Tags =  new[]{"No Design", "No Discussion"}.ToList().AsReadOnly(),State = State.New});
             (var r, var t) = repo.Read(1);
             Assert.Equal("No designing here", t.Title);
