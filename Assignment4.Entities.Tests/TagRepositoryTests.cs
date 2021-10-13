@@ -1,4 +1,5 @@
 using System;
+
 using Assignment4.Core;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -125,5 +126,6 @@ namespace Assignment4.Entities.Tests
         {
             context.Dispose();
         }
+
     }
 }

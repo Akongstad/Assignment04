@@ -14,5 +14,6 @@ namespace Assignment4.Core
         (Response, TaskDetailsDTO) Read(int taskId);
         Response Update(TaskUpdateDTO task);
         Response Delete(int taskId);
+
     }
 }
