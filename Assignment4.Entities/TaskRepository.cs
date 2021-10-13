@@ -14,29 +14,18 @@ namespace Assignment4.Entities
         private readonly KanbanContext context;
 
         public TaskRepository(KanbanContext context) => this.context = context;
-        public IReadOnlyCollection<TaskDTO> All(){
-           var tasks = new List<TaskDTO>();
-           foreach (var item in context.Tasks)
-           {
-                tasks.Add(new TaskDTO{
-                   Id = item.Id,
-                   Title = item.Title,
-                   Description = item.Description,
-                   AssignedToId = item.UserID,
-                   Tags =   item.Tags.Select(n => n.Name).ToList().AsReadOnly(),
-                   State = item.State
-               }
-               );
-           }
-            return tasks;
-        }
+
+        public IReadOnlyCollection<TaskDTO> ReadAll() =>
+            context.Tasks
+                    .Select(t => new TaskDTO(t.Id, t.Title, t.User.Name, t.Tags.Select(n => n.Name).ToList().AsReadOnly(), t.State))
+                    .ToList().AsReadOnly();
        
-        public (Response, int id) Create(TaskDTO task){
+        public (Response Response, int TaskId) Create(TaskCreateDTO task){
             var newTask = new Task{
                    Title = task.Title,
                    Description = task.Description,
                    UserID = task.AssignedToId,
-                   Tags = task.Tags.Select(n => new Tag{Name = n}).ToList().AsReadOnly(),
+                   Tags = GetTags(task.Tags).ToList(),
                    State = State.New,
                    Created = DateTime.UtcNow,
                    StateUpdated = DateTime.UtcNow
@@ -55,7 +44,7 @@ namespace Assignment4.Entities
             }
             switch (task.State){
                 case State.New:
-                    context.Remove(task);
+                    context.Tasks.Remove(task);
                     response = Response.Deleted;
                     break;
 
@@ -77,25 +66,25 @@ namespace Assignment4.Entities
             return response;
         }
         
-        public (Response, TaskDetailsDTO) FindById(int id) {
+        public (Response, TaskDetailsDTO) Read(int id) {
         Task task = context.Tasks.FirstOrDefault(t => t.Id == id);
         if(task == null){
             return (Response.NotFound, null);
         }
-        TaskDetailsDTO taskDetails = new TaskDetailsDTO{
-            Id = task.Id,
-            Title = task.Title,
-            Description = task.Description,
-            AssignedToId = task.UserID,
-            AssignedToEmail = task.User.Email,
-            AssignedToName = task.User.Name,
-            Tags = task.Tags.Select(n => n.Name).ToList().AsReadOnly(),
-            State = task.State
-        };
+        TaskDetailsDTO taskDetails = new TaskDetailsDTO(
+            task.Id,
+            task.Title,
+            task.Description,
+            task.Created,
+            task.User.Name,
+            task.Tags.Select(n => n.Name).ToList(),
+            task.State,
+            task.StateUpdated
+            );
             return (Response.Found, taskDetails);
         }
        
-        public Response Update(TaskDTO task){ 
+        public Response Update(TaskUpdateDTO task){ 
             Task oldTask = context.Tasks.FirstOrDefault(t => t.Id == task.Id);
             if(oldTask == null){
                 return Response.NotFound;
@@ -106,14 +95,47 @@ namespace Assignment4.Entities
             oldTask.Title = task.Title;
             oldTask.Description = task.Description;
             oldTask.UserID = task.AssignedToId;
-            oldTask.Tags = task.Tags.Select(n => new Tag{Name = n}).ToList().AsReadOnly();
+            oldTask.Tags = task.Tags.Select(n => new Tag{Name = n}).ToList();
             if (oldTask.State != task.State){
                 oldTask.StateUpdated = DateTime.UtcNow;
             }
             oldTask.State = task.State;
-            context.Update(oldTask);
+            context.Tasks.Update(oldTask);
             context.SaveChanges();
             return Response.Updated;
+        }
+        public IReadOnlyCollection<TaskDTO> ReadAllRemoved() => 
+            ReadAll()
+            .Where(r => r.State == State.Removed)
+            .ToList().AsReadOnly();
+        
+
+        public IReadOnlyCollection<TaskDTO> ReadAllByTag(string tag) => 
+            ReadAll()
+            .Where(t => t.Tags.Contains(tag))
+            .ToList().AsReadOnly();
+        
+
+        public IReadOnlyCollection<TaskDTO> ReadAllByUser(int userId){
+            var tasks = from t in context.Tasks
+            where t.UserID == userId
+            select new TaskDTO(t.Id, t.Title, t.User.Name, t.Tags.Select(n => n.Name).ToList(), t.State);
+            return tasks.ToList().AsReadOnly();
+        }
+        
+        public IReadOnlyCollection<TaskDTO> ReadAllByState(State state) => 
+            ReadAll()
+            .Where(r => r.State == state)
+            .ToList().AsReadOnly();
+        
+         private IEnumerable<Tag> GetTags(IEnumerable<string> tags)
+        {
+            var existing = context.Tags.Where(t => tags.Contains(t.Name)).ToDictionary(t => t.Name);
+
+            foreach (var tag in tags)
+            {
+                yield return existing.TryGetValue(tag, out var t) ? t : new Tag { Name = tag };
+            }    
         }
         public void Dispose()
         {
